@@ -48,6 +48,9 @@ jobs:
           mkdir -p database
           touch database/database.sqlite
 
+      - name: Create .env from example
+        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+
       - name: Generate key
         run: php artisan key:generate --force
 
