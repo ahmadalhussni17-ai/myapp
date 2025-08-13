@@ -1,10 +1,10 @@
-name: CI
+name: CI/CD
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test-and-build:
@@ -14,13 +14,12 @@ jobs:
       APP_ENV: testing
       APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       DB_CONNECTION: sqlite
-      # Absolute path to the sqlite file:
       DB_DATABASE: ${{ github.workspace }}/database/database.sqlite
       CACHE_DRIVER: array
       QUEUE_CONNECTION: sync
       SESSION_DRIVER: array
       BROADCAST_DRIVER: log
-  
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,7 +27,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: "8.3"
           extensions: mbstring, intl, pdo_mysql, bcmath, pcntl, gd, zip, sqlite3, pdo_sqlite
           coverage: none
           tools: composer:v2
@@ -54,7 +53,6 @@ jobs:
       - name: Generate key
         run: php artisan key:generate --force
 
-      # If your tests don't migrate automatically, uncomment:
       - name: Run migrations
         run: php artisan migrate --force
 
@@ -62,12 +60,11 @@ jobs:
         run: php artisan test --colors=always
 
       # --- Frontend ---
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install JS deps
         run: npm ci
