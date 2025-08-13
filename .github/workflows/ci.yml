@@ -82,39 +82,28 @@ jobs:
   deploy:
     needs: test-and-build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'  # only deploy from main
+    if: github.ref == 'refs/heads/main'
 
     steps:
-      - name: Checkout (needed for railway up to see your repo)
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # If you want to reuse the built frontend from CI, keep this step:
-      - name: Download built frontend artifact (optional)
+      - name: (Optional) Download built frontend artifact
         uses: actions/download-artifact@v4
         with:
           name: public-build
           path: public/build
 
-      - name: Setup Node (for Railway CLI)
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Railway CLI
-        run: npm i -g @railway/cli
-
-      - name: Deploy to Railway
+      - name: Deploy with Railway CLI
+        # Use Railway's CLI container so flags work as documented
+        uses: docker://ghcr.io/railwayapp/cli:latest
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
-        run: |
-          if [ -n "$RAILWAY_PROJECT_ID" ] && [ -n "$RAILWAY_SERVICE_ID" ]; then
-            railway up -- --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --detach
-          elif [ -n "$RAILWAY_PROJECT_ID" ]; then
-            railway up -- --project "$RAILWAY_PROJECT_ID" --detach
-          else
-            railway up --detach
-          fi
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}  # project-scoped token
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}  # or put the service NAME here
+        with:
+          args: >
+            sh -lc
+            "railway up --service=${RAILWAY_SERVICE_ID} --detach"
+
 
 
