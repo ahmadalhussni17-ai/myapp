@@ -80,44 +80,40 @@ jobs:
           path: public/build
 
   deploy:
-  needs: test-and-build
-  runs-on: ubuntu-latest
-  if: github.ref == 'refs/heads/main'  # only deploy from main
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'  # only deploy from main
 
-  steps:
-    - name: Checkout
-    # Get the repository files for Railway to build/deploy
-      uses: actions/checkout@v4
+    steps:
+      - name: Checkout (needed for railway up to see your repo)
+        uses: actions/checkout@v4
 
-    # If you want Railway to build your app, you do NOT need the artifact download.
-    # If you specifically want to reuse the built frontend from CI, keep this step:
-    - name: (Optional) Download built frontend artifact
-      if: always()  # remove this line if you don't need it
-      uses: actions/download-artifact@v4
-      with:
-        name: public-build
-        path: public/build
+      # If you want to reuse the built frontend from CI, keep this step:
+      - name: Download built frontend artifact (optional)
+        uses: actions/download-artifact@v4
+        with:
+          name: public-build
+          path: public/build
 
-    - name: Setup Node (for Railway CLI)
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
+      - name: Setup Node (for Railway CLI)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-    - name: Install Railway CLI
-      run: npm i -g @railway/cli
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
 
-    - name: Deploy to Railway
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        # (Optional) Pin to a specific project/service if you have multiple:
-        RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-        RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
-      run: |
-        # If you set PROJECT_ID / SERVICE_ID secrets, pass them; otherwise omit.
-        if [ -n "$RAILWAY_PROJECT_ID" ] && [ -n "$RAILWAY_SERVICE_ID" ]; then
-          railway up --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --detach
-        elif [ -n "$RAILWAY_PROJECT_ID" ]; then
-          railway up --project "$RAILWAY_PROJECT_ID" --detach
-        else
-          railway up --detach
-        fi
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          # Optional targeting if you have multiple projects/services
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+        run: |
+          if [ -n "$RAILWAY_PROJECT_ID" ] && [ -n "$RAILWAY_SERVICE_ID" ]; then
+            railway up --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --detach
+          elif [ -n "$RAILWAY_PROJECT_ID" ]; then
+            railway up --project "$RAILWAY_PROJECT_ID" --detach
+          else
+            railway up --detach
+          fi
