@@ -94,28 +94,31 @@ jobs:
           name: public-build
           path: public/build
 
-      - name: Preflight – check secrets
+      # Fail fast if the API token isn't available to the job
+      - name: Preflight – check RAILWAY_API_TOKEN
         run: |
-          if [ -z "${RAILWAY_TOKEN}" ]; then
-            echo "RAILWAY_TOKEN is empty. Set repo secret or avoid PRs from forks."; exit 1;
+          if [ -z "${RAILWAY_API_TOKEN}" ]; then
+            echo "RAILWAY_API_TOKEN is empty. Add repo secret RAILWAY_API_TOKEN (Account/Team API token)."; exit 1;
           fi
-          echo "Token present. Proceeding…"
+          echo "API token present. Proceeding…"
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
 
+      # Sanity: show CLI version; whoami may be limited with team tokens, so ignore errors
       - name: Railway version / whoami (diagnostic)
         uses: docker://ghcr.io/railwayapp/cli:latest
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
         with:
           args: sh -lc "railway --version && railway whoami || true"
 
+      # Deploy using the API token
       - name: Deploy to Railway
         uses: docker://ghcr.io/railwayapp/cli:latest
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}          # project-scoped token
-          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }} # can be the exact service NAME or svc_... ID
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}     # account/team token
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}   # exact service NAME or svc_... ID
         with:
           args: >
             sh -lc
-            "railway up --service=${RAILWAY_SERVICE_ID} --detach"
+            'railway up --service="${RAILWAY_SERVICE_ID}" --detach'
