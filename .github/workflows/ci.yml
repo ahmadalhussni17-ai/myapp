@@ -113,9 +113,8 @@ jobs:
       - name: Deploy to Railway
         uses: docker://ghcr.io/railwayapp/cli:latest
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}   # must be a PROJECT token
-          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}  # can be service NAME instead
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}          # project-scoped token
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }} # can be the exact service NAME or svc_... ID
         with:
           args: >
             sh -lc
