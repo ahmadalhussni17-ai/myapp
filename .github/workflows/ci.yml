@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -53,7 +53,7 @@ jobs:
       - name: Generate key (optional)
         run: php artisan key:generate --force
 
-      # If your tests don’t migrate automatically (e.g., no RefreshDatabase), keep this:
+      # If your tests don’t migrate automatically (e.g., missing RefreshDatabase), keep this:
       - name: Run migrations
         run: php artisan migrate --force
 
@@ -78,3 +78,66 @@ jobs:
         with:
           name: public-build
           path: public/build
+
+  deploy:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'  # only deploy from main
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Pull the built frontend from CI
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: public-build
+          path: public/build
+
+      # Copy source + built assets to server (exclude heavy/irrelevant dirs)
+      - name: Copy files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: |
+            .
+          target: /var/www/myapp
+          overwrite: true
+          strip_components: 0
+          exclude: |
+            .git
+            node_modules
+            vendor
+
+      - name: Run deploy commands on server
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+            cd /var/www/myapp
+            # Ensure correct permissions for Laravel
+            mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache
+            chmod -R ug+rw storage bootstrap/cache
+
+            # Install backend deps for production
+            composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
+
+            # Put app in maintenance (optional)
+            php artisan down || true
+
+            # Run database migrations
+            php artisan migrate --force
+
+            # Optimize caches
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+
+            # Bring app back up
+            php artisan up
