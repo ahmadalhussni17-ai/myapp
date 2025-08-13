@@ -112,6 +112,13 @@ jobs:
         with:
           args: sh -lc "railway --version && railway whoami || true"
 
+      - name: Link project (API token)
+        uses: docker://ghcr.io/railwayapp/cli:latest
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+        with:
+          args: link ${{ secrets.RAILWAY_PROJECT_ID }}
+          
       # Deploy using the API token
       - name: Deploy to Railway (shell)
         uses: docker://ghcr.io/railwayapp/cli:latest
