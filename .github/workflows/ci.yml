@@ -80,47 +80,43 @@ jobs:
           path: public/build
 
   deploy:
-  needs: test-and-build
-  runs-on: ubuntu-latest
-  if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
 
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: (Optional) Download built frontend artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: public-build
-        path: public/build
+      - name: (Optional) Download built frontend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: public-build
+          path: public/build
 
-    - name: Preflight – check secrets
-      run: |
-        if [ -z "${RAILWAY_TOKEN}" ]; then
-          echo "RAILWAY_TOKEN is empty. Set repo secret or avoid PRs from forks."; exit 1;
-        fi
-        echo "Token present. Proceeding…"
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Preflight – check secrets
+        run: |
+          if [ -z "${RAILWAY_TOKEN}" ]; then
+            echo "RAILWAY_TOKEN is empty. Set repo secret or avoid PRs from forks."; exit 1;
+          fi
+          echo "Token present. Proceeding…"
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
-    - name: Railway version / whoami (diagnostic)
-      uses: docker://ghcr.io/railwayapp/cli:latest
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-      with:
-        args: sh -lc "railway --version && railway whoami || true"
+      - name: Railway version / whoami (diagnostic)
+        uses: docker://ghcr.io/railwayapp/cli:latest
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        with:
+          args: sh -lc "railway --version && railway whoami || true"
 
-    - name: Deploy to Railway
-      uses: docker://ghcr.io/railwayapp/cli:latest
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}   # must be a PROJECT token
-        RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}  # can be service NAME instead
-        RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-      with:
-        args: >
-          sh -lc
-          "railway up --service=${RAILWAY_SERVICE_ID} --detach"
-
-
-
-
+      - name: Deploy to Railway
+        uses: docker://ghcr.io/railwayapp/cli:latest
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}   # must be a PROJECT token
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}  # can be service NAME instead
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+        with:
+          args: >
+            sh -lc
+            "railway up --service=${RAILWAY_SERVICE_ID} --detach"
