@@ -115,6 +115,7 @@ jobs:
       env:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}   # must be a PROJECT token
         RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}  # can be service NAME instead
+        RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
       with:
         args: >
           sh -lc
