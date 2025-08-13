@@ -78,5 +78,3 @@ jobs:
         run: php artisan test --colors=always
 
       # --- Frontend ---
-
-      - name: Setup Node
