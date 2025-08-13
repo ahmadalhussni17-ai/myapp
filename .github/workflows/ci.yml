@@ -20,7 +20,7 @@ jobs:
       QUEUE_CONNECTION: sync
       SESSION_DRIVER: array
       BROADCAST_DRIVER: log
-
+  
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,8 +55,8 @@ jobs:
         run: php artisan key:generate --force
 
       # If your tests don't migrate automatically, uncomment:
-      # - name: Run migrations
-      #   run: php artisan migrate --force
+      - name: Run migrations
+        run: php artisan migrate --force
 
       - name: Run tests
         run: php artisan test --colors=always
